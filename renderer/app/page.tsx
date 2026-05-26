@@ -101,7 +101,7 @@ export default function SessionPage() {
             <>
               <div className="absolute left-4 top-4 z-10 flex flex-col">
                 <HrDisplay />
-                <HrvDisplay />
+                {/* <HrvDisplay /> */}
                 <ZoneIndicator />
                 <ConnectButton
                   onConnect={() => void client.connect()}
