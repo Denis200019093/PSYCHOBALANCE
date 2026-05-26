@@ -21,6 +21,7 @@ import { HrChart } from '@/components/HrChart';
 export default function SessionPage() {
   const settings = useSession((s) => s.settings);
   const currentZone = useSession((s) => s.currentZone);
+  const bleStatus = useSession((s) => s.bleStatus);
   const setHr = useSession((s) => s.setHr);
   const setZone = useSession((s) => s.setZone);
   const setBleStatus = useSession((s) => s.setBleStatus);
@@ -29,6 +30,8 @@ export default function SessionPage() {
   const client = useMemo(() => new PolarClient(), []);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [uiVisible, setUiVisible] = useState(true);
+  const connected = bleStatus === 'streaming';
+  const busy = bleStatus === 'requesting' || bleStatus === 'connecting';
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -94,16 +97,34 @@ export default function SessionPage() {
       <VideoPlayer src={videoSrc} fadeMs={fadeMs} />
       {uiVisible && (
         <>
-          <div className="absolute left-4 top-4 z-10 flex flex-col">
-            <HrDisplay />
-            <HrvDisplay />
-            <ZoneIndicator />
-            <ConnectButton
-              onConnect={() => void client.connect()}
-              onDisconnect={() => void client.disconnect()}
-            />
-          </div>
-          <HrChart />
+          {connected && (
+            <>
+              <div className="absolute left-4 top-4 z-10 flex flex-col">
+                <HrDisplay />
+                <HrvDisplay />
+                <ZoneIndicator />
+                <ConnectButton
+                  onConnect={() => void client.connect()}
+                  onDisconnect={() => void client.disconnect()}
+                />
+              </div>
+              <HrChart />
+            </>
+          )}
+          {!connected && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center">
+              <Button
+                type="button"
+                size="lg"
+                variant="success"
+                disabled={busy}
+                onClick={() => void client.connect()}
+                className="min-w-55"
+              >
+                {busy ? 'Підключення…' : 'Підключити Polar'}
+              </Button>
+            </div>
+          )}
           <BlePicker />
           <Button
             type="button"
