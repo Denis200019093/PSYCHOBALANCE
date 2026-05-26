@@ -1,0 +1,32 @@
+appId: ua.psychobalance.app
+productName: PSYCHOBALANCE
+copyright: Copyright (c) 2026 PSYCHOBALANCE
+directories:
+  output: release
+  buildResources: resources
+files:
+  - dist-electron/**/*
+  - renderer/out/**/*
+  - shared/**/*
+  - package.json
+  - "!**/*.map"
+extraResources:
+  - from: resources/videos
+    to: videos
+    filter: ["**/*"]
+asar: true
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: resources/icon.ico
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  shortcutName: PSYCHOBALANCE
+publish:
+  provider: github
+  owner: Denis200019093
+  repo: PSYCHOBALANCE
+  releaseType: release

@@ -1,0 +1,13 @@
+node_modules/
+dist-electron/
+release/
+renderer/.next/
+renderer/out/
+renderer/next-env.d.ts
+*.log
+.DS_Store
+.env*
+!.env.example
+.vscode/
+.idea/
+.claude/

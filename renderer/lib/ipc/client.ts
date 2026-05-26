@@ -1,0 +1,25 @@
+import type { AppSettings, BleDeviceInfo } from '@shared/contracts';
+
+// Thin wrapper around window.psy that throws a clear error if the preload
+// did not run (e.g. when accidentally opening pages in a normal browser).
+function psy() {
+  if (typeof window === 'undefined' || !window.psy) {
+    throw new Error('window.psy is not available — preload did not initialize.');
+  }
+  return window.psy;
+}
+
+export const ipc = {
+  getSettings: (): Promise<AppSettings> => psy().settings.get(),
+  updateSettings: (patch: Partial<AppSettings>): Promise<AppSettings> =>
+    psy().settings.update(patch),
+  onSettingsChange: (cb: (s: AppSettings) => void): (() => void) =>
+    psy().settings.onChange(cb),
+  pickVideo: (): Promise<string | null> => psy().video.pickFile(),
+  resolveVideoUrl: (path: string): string => psy().video.resolveUrl(path),
+  getAppVersion: (): Promise<string> => psy().app.version(),
+  onBleDevices: (cb: (devices: BleDeviceInfo[]) => void): (() => void) =>
+    psy().ble.onDevices(cb),
+  selectBleDevice: (deviceId: string): void => psy().ble.select(deviceId),
+  cancelBleSelect: (): void => psy().ble.cancel(),
+};
