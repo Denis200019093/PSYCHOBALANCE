@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, session, protocol, net, globalShortcut } from 'electron';
+import { app, BrowserWindow, Menu, ipcMain, session, protocol, net, globalShortcut } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -8,6 +8,8 @@ import { IPC, type BleDeviceInfo } from '../shared/contracts';
 
 const isDev = !app.isPackaged;
 const settings = new SettingsStore();
+
+Menu.setApplicationMenu(null);
 
 // Web Bluetooth is on by default in modern Chromium builds shipped with Electron.
 // The experimental WebBluetoothNewPermissionsBackend / ConfirmPairingSupport
@@ -41,6 +43,9 @@ async function createWindow(): Promise<BrowserWindow> {
       experimentalFeatures: false,
     },
   });
+
+  win.setMenu(null);
+  win.setMenuBarVisibility(false);
 
   // In-app picker bridge. The event fires repeatedly as scanning discovers
   // devices; each fire ships a FRESH callback. We always defer to the renderer
@@ -128,7 +133,6 @@ async function createWindow(): Promise<BrowserWindow> {
 
   if (isDev) {
     await win.loadURL('http://localhost:3000');
-    win.webContents.openDevTools({ mode: 'detach' });
   } else {
     await win.loadFile(path.join(__dirname, '..', '..', 'renderer', 'out', 'index.html'));
   }

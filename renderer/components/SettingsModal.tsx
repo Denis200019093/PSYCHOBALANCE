@@ -384,16 +384,17 @@ function SortableZoneCard({ zone: z, onUpdate, onPickVideo, onDelete }: ZoneCard
               className="bg-white/5 text-white"
             />
           </Field>
-          <Field label="відео">
+          <Field label="відео (файл або URL)">
             <div className="flex items-center gap-2">
-              <code
-                className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap rounded bg-white/5 px-2 py-1.5 text-xs"
-                title={z.videoPath}
-              >
-                {z.videoPath || '— не вибрано —'}
-              </code>
+              <Input
+                type="text"
+                value={z.videoPath}
+                placeholder="C:\... або https://..."
+                onChange={(e) => void onUpdate(z.id, { videoPath: e.target.value })}
+                className="flex-1 bg-white/5 text-white"
+              />
               <Button size="sm" variant="success" onClick={() => void onPickVideo(z.id)}>
-                Обрати…
+                Обрати файл…
               </Button>
               {z.videoPath && (
                 <Button

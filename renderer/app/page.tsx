@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
-import { Settings } from 'lucide-react';
+import { Settings, Volume2, VolumeX } from 'lucide-react';
 import { PolarClient } from '@/lib/ble/polarClient';
 import { zoneEngine } from '@/lib/hr/zoneEngine';
 import { hrvEngine } from '@/lib/hr/hrvEngine';
@@ -30,6 +30,8 @@ export default function SessionPage() {
   const client = useMemo(() => new PolarClient(), []);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [uiVisible, setUiVisible] = useState(true);
+  const [muted, setMuted] = useState(false);
+  const [volume, setVolume] = useState(1);
   const connected = bleStatus === 'streaming';
   const busy = bleStatus === 'requesting' || bleStatus === 'connecting';
 
@@ -94,7 +96,7 @@ export default function SessionPage() {
 
   return (
     <main className="relative h-screen w-screen overflow-hidden">
-      <VideoPlayer src={videoSrc} fadeMs={fadeMs} />
+      <VideoPlayer src={videoSrc} fadeMs={fadeMs} muted={muted} volume={volume} />
       {uiVisible && (
         <>
           {connected && (
@@ -126,6 +128,35 @@ export default function SessionPage() {
             </div>
           )}
           <BlePicker />
+          {connected && (
+            <div className="absolute right-44 top-4 z-10 flex items-center gap-2 rounded-md bg-black/55 px-2 py-1 text-white">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setMuted((m) => !m)}
+                aria-label={muted ? 'Увімкнути звук' : 'Вимкнути звук'}
+                className="h-8 w-8 p-0 text-white hover:bg-white/10"
+              >
+                {muted || volume === 0 ? <VolumeX /> : <Volume2 />}
+              </Button>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={muted ? 0 : volume}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  setVolume(v);
+                  if (v > 0 && muted) setMuted(false);
+                  if (v === 0) setMuted(true);
+                }}
+                aria-label="Гучність"
+                className="h-1 w-28 cursor-pointer accent-white"
+              />
+            </div>
+          )}
           <Button
             type="button"
             variant="secondary"

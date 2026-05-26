@@ -16,7 +16,8 @@ export const ipc = {
   onSettingsChange: (cb: (s: AppSettings) => void): (() => void) =>
     psy().settings.onChange(cb),
   pickVideo: (): Promise<string | null> => psy().video.pickFile(),
-  resolveVideoUrl: (path: string): string => psy().video.resolveUrl(path),
+  resolveVideoUrl: (path: string): string =>
+    /^https?:\/\//i.test(path) ? path : psy().video.resolveUrl(path),
   getAppVersion: (): Promise<string> => psy().app.version(),
   onBleDevices: (cb: (devices: BleDeviceInfo[]) => void): (() => void) =>
     psy().ble.onDevices(cb),

@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 interface Props {
   src: string | null;
   fadeMs: number;
+  muted?: boolean;
+  volume?: number;
 }
 
 interface Layer {
@@ -12,11 +14,17 @@ interface Layer {
   visible: boolean;
 }
 
-export function VideoPlayer({ src, fadeMs }: Props) {
+export function VideoPlayer({ src, fadeMs, muted = false, volume = 1 }: Props) {
   const [a, setA] = useState<Layer>({ src: null, visible: true });
   const [b, setB] = useState<Layer>({ src: null, visible: false });
   const aRef = useRef<HTMLVideoElement | null>(null);
   const bRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    const clamped = Math.max(0, Math.min(1, volume));
+    if (aRef.current) aRef.current.volume = clamped;
+    if (bRef.current) bRef.current.volume = clamped;
+  }, [volume]);
 
   useEffect(() => {
     if (!src) return;
@@ -59,7 +67,7 @@ export function VideoPlayer({ src, fadeMs }: Props) {
         ref={aRef}
         autoPlay
         loop
-        muted
+        muted={muted || !a.visible}
         playsInline
         className={layerCls(a.visible)}
         style={layerStyle}
@@ -68,7 +76,7 @@ export function VideoPlayer({ src, fadeMs }: Props) {
         ref={bRef}
         autoPlay
         loop
-        muted
+        muted={muted || !b.visible}
         playsInline
         className={layerCls(b.visible)}
         style={layerStyle}
