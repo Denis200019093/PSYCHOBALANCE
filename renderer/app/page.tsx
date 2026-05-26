@@ -119,7 +119,7 @@ export default function SessionPage() {
                 variant="success"
                 disabled={busy}
                 onClick={() => void client.connect()}
-                className="min-w-55"
+                className="min-w-64 h-12"
               >
                 {busy ? 'Підключення…' : 'Підключити Polar'}
               </Button>
