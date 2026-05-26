@@ -21,9 +21,9 @@ win:
       arch: [x64]
   icon: resources/icon.ico
 nsis:
-  oneClick: false
+  oneClick: true
   perMachine: false
-  allowToChangeInstallationDirectory: true
+  allowToChangeInstallationDirectory: false
   shortcutName: PSYCHOBALANCE
 publish:
   provider: github
