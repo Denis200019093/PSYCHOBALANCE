@@ -17,9 +17,9 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Plus, Trash2, X } from 'lucide-react';
+import { GripVertical, Plus, RotateCcw, Trash2, X } from 'lucide-react';
 import { ipc } from '@/lib/ipc/client';
-import type { AppSettings, ZoneConfig } from '@shared/contracts';
+import { DEFAULT_ZONE_VIDEOS, type AppSettings, type ZoneConfig } from '@shared/contracts';
 import {
   Dialog,
   DialogContent,
@@ -77,6 +77,15 @@ export function SettingsModal({ open, onClose }: Props) {
     if (!z) return;
     if (!confirm(`Видалити зону "${z.label}"?`)) return;
     const zones = settings.zones.filter((x) => x.id !== id);
+    setSettings(await ipc.updateSettings({ zones }));
+  };
+
+  const resetVideos = async () => {
+    if (!settings) return;
+    if (!confirm('Скинути відео всіх дефолтних зон до стандартних URL?')) return;
+    const zones = settings.zones.map((z) =>
+      DEFAULT_ZONE_VIDEOS[z.id] ? { ...z, videoPath: DEFAULT_ZONE_VIDEOS[z.id] as string } : z,
+    );
     setSettings(await ipc.updateSettings({ zones }));
   };
 
@@ -239,15 +248,25 @@ export function SettingsModal({ open, onClose }: Props) {
                       </div>
                     </SortableContext>
                   </DndContext>
-                  <Button
-                    type="button"
-                    variant="success"
-                    className="mt-4"
-                    onClick={() => void addZone()}
-                  >
-                    <Plus />
-                    Додати зону
-                  </Button>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="success"
+                      onClick={() => void addZone()}
+                    >
+                      <Plus />
+                      Додати зону
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => void resetVideos()}
+                      title="Повернути відео дефолтних зон до стандартних URL"
+                    >
+                      <RotateCcw />
+                      Скинути відео
+                    </Button>
+                  </div>
                 </TabsContent>
               </div>
             </ScrollArea>

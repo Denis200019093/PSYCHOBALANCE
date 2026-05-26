@@ -46,6 +46,12 @@ export type BleStatus =
   | 'disconnected'
   | 'error';
 
+export const DEFAULT_ZONE_VIDEOS: Record<string, string> = {
+  low:  'https://github.com/Denis200019093/PSYCHOBALANCE_ASSETS/releases/download/videos-1/1.mp4',
+  mid:  'https://github.com/Denis200019093/PSYCHOBALANCE_ASSETS/releases/download/videos-1/2.mp4',
+  high: 'https://github.com/Denis200019093/PSYCHOBALANCE_ASSETS/releases/download/videos-1/3.mp4',
+};
+
 export const IPC = {
   SETTINGS_GET: 'settings:get',
   SETTINGS_UPDATE: 'settings:update',

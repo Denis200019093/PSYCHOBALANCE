@@ -2,12 +2,12 @@ import { app } from 'electron';
 import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { AppSettings, ZoneConfig } from '../../shared/contracts';
+import { DEFAULT_ZONE_VIDEOS, type AppSettings, type ZoneConfig } from '../../shared/contracts';
 
 const DEFAULT_ZONES: ZoneConfig[] = [
-  { id: 'low',  label: 'Низька',  color: '#3b6ea5', minHr: 0,  maxHr: 70,  videoPath: '', fadeMs: 2500 },
-  { id: 'mid',  label: 'Середня', color: '#3fae6a', minHr: 70, maxHr: 90,  videoPath: '', fadeMs: 2000 },
-  { id: 'high', label: 'Висока',  color: '#c0563b', minHr: 90, maxHr: 999, videoPath: '', fadeMs: 1500 },
+  { id: 'low',  label: 'Низька',  color: '#3b6ea5', minHr: 0,  maxHr: 70,  videoPath: DEFAULT_ZONE_VIDEOS.low ?? '',  fadeMs: 2500 },
+  { id: 'mid',  label: 'Середня', color: '#3fae6a', minHr: 70, maxHr: 90,  videoPath: DEFAULT_ZONE_VIDEOS.mid ?? '',  fadeMs: 2000 },
+  { id: 'high', label: 'Висока',  color: '#c0563b', minHr: 90, maxHr: 999, videoPath: DEFAULT_ZONE_VIDEOS.high ?? '', fadeMs: 1500 },
 ];
 
 const DEFAULTS: AppSettings = {
@@ -67,8 +67,6 @@ export class SettingsStore extends EventEmitter {
   }
 
   private merge(base: AppSettings, patch: Partial<AppSettings>): AppSettings {
-    // Shallow merge top-level, but preserve a complete `zones` array if the
-    // user has fewer/more zones than defaults — user data wins when present.
     return {
       zones: Array.isArray(patch.zones) && patch.zones.length > 0 ? patch.zones : base.zones,
       autoMode: typeof patch.autoMode === 'boolean' ? patch.autoMode : base.autoMode,
