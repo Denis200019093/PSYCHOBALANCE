@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { AppSettings, BleDeviceInfo } from '../shared/contracts';
+import type { AppSettings, BleDeviceInfo, UpdateStatus } from '../shared/contracts';
 
 // IMPORTANT: with `sandbox: true`, preload may only require these built-ins:
 // electron, events, timers, url. Any other require (including project paths)
@@ -14,7 +14,11 @@ type IpcChannel =
   | 'app:version'
   | 'ble:devices'
   | 'ble:select'
-  | 'ble:cancel';
+  | 'ble:cancel'
+  | 'update:status'
+  | 'update:get'
+  | 'update:check'
+  | 'update:install';
 
 const channel = <C extends IpcChannel>(c: C): C => c;
 
@@ -47,6 +51,16 @@ const api = {
     },
     cancel: (): void => {
       ipcRenderer.send(channel('ble:cancel'));
+    },
+  },
+  updates: {
+    get: (): Promise<UpdateStatus> => ipcRenderer.invoke(channel('update:get')),
+    check: (): Promise<UpdateStatus> => ipcRenderer.invoke(channel('update:check')),
+    install: (): Promise<boolean> => ipcRenderer.invoke(channel('update:install')),
+    onStatus: (cb: (s: UpdateStatus) => void): (() => void) => {
+      const h = (_: unknown, s: UpdateStatus) => cb(s);
+      ipcRenderer.on(channel('update:status'), h);
+      return () => ipcRenderer.removeListener(channel('update:status'), h);
     },
   },
 } as const;

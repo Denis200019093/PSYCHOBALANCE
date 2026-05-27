@@ -61,9 +61,31 @@ export const IPC = {
   BLE_DEVICES: 'ble:devices',
   BLE_SELECT: 'ble:select',
   BLE_CANCEL: 'ble:cancel',
+  UPDATE_STATUS: 'update:status',
+  UPDATE_GET: 'update:get',
+  UPDATE_CHECK: 'update:check',
+  UPDATE_INSTALL: 'update:install',
 } as const;
 
 export interface BleDeviceInfo {
   deviceId: string;
   deviceName: string;
+}
+
+export type UpdateState =
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'downloading'
+  | 'downloaded'
+  | 'not-available'
+  | 'error'
+  | 'disabled';
+
+export interface UpdateStatus {
+  state: UpdateState;
+  version?: string;
+  percent?: number;
+  bytesPerSecond?: number;
+  error?: string;
 }

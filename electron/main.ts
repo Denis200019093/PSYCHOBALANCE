@@ -4,7 +4,16 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { SettingsStore } from './services/settingsStore';
 import { registerIpcHandlers, broadcastSettings } from './ipc/handlers';
-import { IPC, type BleDeviceInfo } from '../shared/contracts';
+import { IPC, type BleDeviceInfo, type UpdateStatus } from '../shared/contracts';
+
+let updateStatus: UpdateStatus = { state: 'idle' };
+
+function setUpdateStatus(next: UpdateStatus): void {
+  updateStatus = next;
+  for (const w of BrowserWindow.getAllWindows()) {
+    if (!w.isDestroyed()) w.webContents.send(IPC.UPDATE_STATUS, next);
+  }
+}
 
 const isDev = !app.isPackaged;
 const settings = new SettingsStore();
@@ -173,13 +182,33 @@ app.whenReady().then(() => {
     settings.update({ kioskMode: next });
   });
 
+  ipcMain.handle(IPC.UPDATE_GET, () => updateStatus);
+  ipcMain.handle(IPC.UPDATE_CHECK, async () => {
+    if (isDev) return updateStatus;
+    try {
+      await autoUpdater.checkForUpdates();
+    } catch (err) {
+      setUpdateStatus({ state: 'error', error: (err as Error).message });
+    }
+    return updateStatus;
+  });
+  ipcMain.handle(IPC.UPDATE_INSTALL, () => {
+    if (updateStatus.state !== 'downloaded') return false;
+    autoUpdater.quitAndInstall();
+    return true;
+  });
+
   void createWindow();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) void createWindow();
   });
 
-  if (!isDev) initAutoUpdater();
+  if (isDev) {
+    setUpdateStatus({ state: 'disabled' });
+  } else {
+    initAutoUpdater();
+  }
 });
 
 function initAutoUpdater() {
@@ -187,10 +216,29 @@ function initAutoUpdater() {
   autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.logger = console;
 
-  autoUpdater.on('error', (err) => console.error('[autoUpdater]', err));
-  autoUpdater.on('update-available', (info) => console.log('[autoUpdater] available', info.version));
+  autoUpdater.on('checking-for-update', () => setUpdateStatus({ state: 'checking' }));
+  autoUpdater.on('update-available', (info) => {
+    console.log('[autoUpdater] available', info.version);
+    setUpdateStatus({ state: 'available', version: info.version });
+  });
+  autoUpdater.on('update-not-available', (info) => {
+    setUpdateStatus({ state: 'not-available', version: info.version });
+  });
+  autoUpdater.on('download-progress', (p) => {
+    setUpdateStatus({
+      state: 'downloading',
+      percent: Math.round(p.percent ?? 0),
+      bytesPerSecond: p.bytesPerSecond,
+      version: updateStatus.version,
+    });
+  });
   autoUpdater.on('update-downloaded', (info) => {
     console.log('[autoUpdater] downloaded', info.version, '— will install on quit');
+    setUpdateStatus({ state: 'downloaded', version: info.version });
+  });
+  autoUpdater.on('error', (err) => {
+    console.error('[autoUpdater]', err);
+    setUpdateStatus({ state: 'error', error: err.message });
   });
 
   const check = () => autoUpdater.checkForUpdates().catch((err) => console.error('[autoUpdater] check failed', err));

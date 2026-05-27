@@ -34,6 +34,7 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { UpdateIndicator } from '@/components/UpdateIndicator';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -143,6 +144,9 @@ export function SettingsModal({ open, onClose }: Props) {
           <div className="flex flex-1 items-center justify-center text-white/60">Завантаження…</div>
         ) : (
           <Tabs defaultValue="general" className="flex flex-1 flex-col overflow-hidden">
+            <div className="mx-6 mt-4">
+              <UpdateIndicator />
+            </div>
             <TabsList className="mx-6 mt-4 w-fit bg-white/5">
               <TabsTrigger value="general">Загальне</TabsTrigger>
               <TabsTrigger value="zones">Зони</TabsTrigger>
