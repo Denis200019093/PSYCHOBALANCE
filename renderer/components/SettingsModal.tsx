@@ -19,7 +19,13 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Plus, RotateCcw, Trash2, X } from 'lucide-react';
 import { ipc } from '@/lib/ipc/client';
-import { DEFAULT_ZONE_VIDEOS, type AppSettings, type ZoneConfig } from '@shared/contracts';
+import {
+  DEFAULT_ZONES,
+  DEFAULT_ZONE_VIDEOS,
+  isDefaultZoneShape,
+  type AppSettings,
+  type ZoneConfig,
+} from '@shared/contracts';
 import {
   Dialog,
   DialogContent,
@@ -88,6 +94,12 @@ export function SettingsModal({ open, onClose }: Props) {
       DEFAULT_ZONE_VIDEOS[z.id] ? { ...z, videoPath: DEFAULT_ZONE_VIDEOS[z.id] as string } : z,
     );
     setSettings(await ipc.updateSettings({ zones }));
+  };
+
+  const resetZones = async () => {
+    if (!settings) return;
+    if (!confirm('Скинути зони до дефолтних (Низька / Середня / Висока)? Кастомні зони буде видалено.')) return;
+    setSettings(await ipc.updateSettings({ zones: DEFAULT_ZONES.map((z) => ({ ...z })) }));
   };
 
   const addZone = async () => {
@@ -261,15 +273,27 @@ export function SettingsModal({ open, onClose }: Props) {
                       <Plus />
                       Додати зону
                     </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => void resetVideos()}
-                      title="Повернути відео дефолтних зон до стандартних URL"
-                    >
-                      <RotateCcw />
-                      Скинути відео
-                    </Button>
+                    {isDefaultZoneShape(settings.zones) ? (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => void resetVideos()}
+                        title="Повернути відео дефолтних зон до стандартних URL"
+                      >
+                        <RotateCcw />
+                        Скинути відео
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => void resetZones()}
+                        title="Повернути зони до дефолтних (Низька / Середня / Висока)"
+                      >
+                        <RotateCcw />
+                        Скинути зони
+                      </Button>
+                    )}
                   </div>
                 </TabsContent>
               </div>

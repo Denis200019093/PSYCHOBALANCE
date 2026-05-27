@@ -52,6 +52,28 @@ export const DEFAULT_ZONE_VIDEOS: Record<string, string> = {
   high: 'https://github.com/Denis200019093/PSYCHOBALANCE_ASSETS/releases/download/videos-1/3.mp4',
 };
 
+export const DEFAULT_ZONES: ZoneConfig[] = [
+  { id: 'low',  label: 'Низька',  color: '#3b6ea5', minHr: 0,  maxHr: 70,  videoPath: DEFAULT_ZONE_VIDEOS.low ?? '',  fadeMs: 2500 },
+  { id: 'mid',  label: 'Середня', color: '#3fae6a', minHr: 70, maxHr: 90,  videoPath: DEFAULT_ZONE_VIDEOS.mid ?? '',  fadeMs: 2000 },
+  { id: 'high', label: 'Висока',  color: '#c0563b', minHr: 90, maxHr: 999, videoPath: DEFAULT_ZONE_VIDEOS.high ?? '', fadeMs: 1500 },
+];
+
+export function isDefaultZoneShape(zones: ZoneConfig[]): boolean {
+  if (zones.length !== DEFAULT_ZONES.length) return false;
+  return DEFAULT_ZONES.every((def, i) => {
+    const z = zones[i];
+    if (!z) return false;
+    return (
+      z.id === def.id &&
+      z.label === def.label &&
+      z.color === def.color &&
+      z.minHr === def.minHr &&
+      z.maxHr === def.maxHr &&
+      z.fadeMs === def.fadeMs
+    );
+  });
+}
+
 export const IPC = {
   SETTINGS_GET: 'settings:get',
   SETTINGS_UPDATE: 'settings:update',

@@ -2,13 +2,7 @@ import { app } from 'electron';
 import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
-import { DEFAULT_ZONE_VIDEOS, type AppSettings, type ZoneConfig } from '../../shared/contracts';
-
-const DEFAULT_ZONES: ZoneConfig[] = [
-  { id: 'low',  label: 'Низька',  color: '#3b6ea5', minHr: 0,  maxHr: 70,  videoPath: DEFAULT_ZONE_VIDEOS.low ?? '',  fadeMs: 2500 },
-  { id: 'mid',  label: 'Середня', color: '#3fae6a', minHr: 70, maxHr: 90,  videoPath: DEFAULT_ZONE_VIDEOS.mid ?? '',  fadeMs: 2000 },
-  { id: 'high', label: 'Висока',  color: '#c0563b', minHr: 90, maxHr: 999, videoPath: DEFAULT_ZONE_VIDEOS.high ?? '', fadeMs: 1500 },
-];
+import { DEFAULT_ZONES, type AppSettings } from '../../shared/contracts';
 
 const DEFAULTS: AppSettings = {
   zones: DEFAULT_ZONES,
