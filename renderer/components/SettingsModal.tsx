@@ -131,7 +131,7 @@ export function SettingsModal({ open, onClose }: Props) {
   };
 
   const setNumber = async (
-    key: 'dwellSeconds' | 'smoothingWindowSec' | 'crossfadeMs' | 'hrvWindowSec' | 'chartWindowSec',
+    key: 'dwellSeconds' | 'crossfadeMs' | 'hrvWindowSec' | 'chartWindowSec',
     value: number,
   ) => {
     setSettings(await ipc.updateSettings({ [key]: value } as Partial<AppSettings>));
@@ -205,13 +205,6 @@ export function SettingsModal({ open, onClose }: Props) {
                         min={3}
                         max={20}
                         onChange={(v) => void setNumber('dwellSeconds', v)}
-                      />
-                      <NumberRow
-                        label="Вікно згладжування HR (с)"
-                        value={settings.smoothingWindowSec}
-                        min={1}
-                        max={30}
-                        onChange={(v) => void setNumber('smoothingWindowSec', v)}
                       />
                       <NumberRow
                         label="Тривалість cross-fade (мс)"

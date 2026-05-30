@@ -63,10 +63,9 @@ export default function SessionPage() {
     const engine$ = zoneEngine(client.hr$, {
       zones: settings.zones,
       dwellMs: settings.dwellSeconds * 1000,
-      smoothingAlpha: 1 / Math.max(1, settings.smoothingWindowSec),
     });
     const engineSub = engine$.subscribe((state) => {
-      setHr(state.hrRaw, state.hrSmoothed);
+      setHr(state.hrRaw);
       const current = settings.autoMode
         ? findZoneById(state.currentZoneId, settings.zones)
         : useSession.getState().currentZone;

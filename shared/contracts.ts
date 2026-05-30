@@ -12,7 +12,6 @@ export interface AppSettings {
   zones: ZoneConfig[];
   autoMode: boolean;
   dwellSeconds: number;
-  smoothingWindowSec: number;
   crossfadeMs: number;
   hrvWindowSec: number;
   chartWindowSec: number;

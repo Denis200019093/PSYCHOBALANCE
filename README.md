@@ -7,7 +7,7 @@ Therapeutic desktop app for Windows 11. Streams heart rate from a Polar BLE ches
 - **Electron 33** — desktop shell
 - **Next.js 15** — UI (App Router, static export `output: 'export'`)
 - **Web Bluetooth API** — BLE GATT in renderer; main intercepts `select-bluetooth-device` to auto-pick the first Polar
-- **RxJS** — HR stream with EMA smoothing and dwell-time hysteresis
+- **RxJS** — HR stream with dwell-time hysteresis
 - **Zustand** — UI state
 - **electron-store** — persisted settings
 - **electron-builder** — NSIS installer
@@ -71,7 +71,6 @@ All ranges and video bindings are editable in `Налаштування`.
 - **BLE in renderer, not in main** — Web Bluetooth is native to Chromium; no native bindings to recompile per Electron upgrade. Main only suppresses the system chooser via `webContents.on('select-bluetooth-device')`.
 - **Custom protocol `psy-video://`** — user-selected videos live anywhere on disk. Renderer asks main for them through a path-validated protocol handler instead of exposing `file://`.
 - **Hysteresis (dwell-time)** — the zone engine only commits a new zone when the candidate persists for `dwellSeconds`. Flapping HR between two zones never triggers a switch.
-- **EMA smoothing** — single-value running average (O(1) memory) avoids transient spikes from motion artifacts dominating the engine.
 - **Two-layer cross-fade** — preload next zone's video into the hidden `<video>` element, swap opacity once `canplay` fires. Avoids black frames inherent to single-element `src` changes.
 
 ## Future extensions (already accommodated)
