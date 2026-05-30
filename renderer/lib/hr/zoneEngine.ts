@@ -37,7 +37,7 @@ export function zoneEngine(
           ? sample.bpm
           : alpha * sample.bpm + (1 - alpha) * state.hrSmoothed;
 
-      const observed = findZone(smoothed, opts.zones)?.id ?? null;
+      const observed = findZone(sample.bpm, opts.zones)?.id ?? null;
 
       // 1) Observed zone matches what we already display — clear pending.
       if (observed === state.currentZoneId) {
