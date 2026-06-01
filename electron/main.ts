@@ -41,6 +41,7 @@ async function createWindow(): Promise<BrowserWindow> {
     minHeight: 640,
     backgroundColor: '#000000',
     show: false,
+    frame: false,
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -97,9 +98,33 @@ async function createWindow(): Promise<BrowserWindow> {
   ipcMain.on(IPC.BLE_SELECT, onSelect);
   ipcMain.on(IPC.BLE_CANCEL, onCancel);
 
+  // Custom title bar controls (frame: false). The renderer draws the bar and
+  // sends these; the kiosk lock still blocks Alt+F4 / Ctrl+W independently.
+  const onMinimize = () => !win.isDestroyed() && win.minimize();
+  const onMaximizeToggle = () => {
+    if (win.isDestroyed()) return;
+    if (win.isMaximized()) win.unmaximize();
+    else win.maximize();
+  };
+  const onClose = () => !win.isDestroyed() && win.close();
+  ipcMain.on(IPC.WINDOW_MINIMIZE, onMinimize);
+  ipcMain.on(IPC.WINDOW_MAXIMIZE_TOGGLE, onMaximizeToggle);
+  ipcMain.on(IPC.WINDOW_CLOSE, onClose);
+  ipcMain.handle(IPC.WINDOW_IS_MAXIMIZED, () => !win.isDestroyed() && win.isMaximized());
+
+  const emitMaximized = () => {
+    if (!win.isDestroyed()) win.webContents.send(IPC.WINDOW_MAXIMIZED_CHANGED, win.isMaximized());
+  };
+  win.on('maximize', emitMaximized);
+  win.on('unmaximize', emitMaximized);
+
   win.on('closed', () => {
     ipcMain.removeListener(IPC.BLE_SELECT, onSelect);
     ipcMain.removeListener(IPC.BLE_CANCEL, onCancel);
+    ipcMain.removeListener(IPC.WINDOW_MINIMIZE, onMinimize);
+    ipcMain.removeListener(IPC.WINDOW_MAXIMIZE_TOGGLE, onMaximizeToggle);
+    ipcMain.removeListener(IPC.WINDOW_CLOSE, onClose);
+    ipcMain.removeHandler(IPC.WINDOW_IS_MAXIMIZED);
     pendingCallback?.('');
     pendingCallback = null;
   });

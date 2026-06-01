@@ -17,6 +17,7 @@ import { ConnectButton } from '@/components/ConnectButton';
 import { BlePicker } from '@/components/BlePicker';
 import { SettingsModal } from '@/components/SettingsModal';
 import { HrChart } from '@/components/HrChart';
+import { TitleBar } from '@/components/TitleBar';
 
 export default function SessionPage() {
   const settings = useSession((s) => s.settings);
@@ -96,11 +97,23 @@ export default function SessionPage() {
   return (
     <main className="relative h-screen w-screen overflow-hidden">
       <VideoPlayer src={videoSrc} fadeMs={fadeMs} muted={muted} volume={volume} />
+      {/* Watermark — always on, survives Ctrl+D (UI hide) and kiosk. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/logo-white.svg"
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        className={`pointer-events-none absolute z-0 w-40 select-none opacity-70 transition-all duration-300 ${
+          uiVisible ? 'right-5 top-10' : 'right-4 top-4'
+        }`}
+      />
       {uiVisible && (
         <>
+          {!settings?.kioskMode && <TitleBar />}
           {connected && (
             <>
-              <div className="absolute left-4 top-4 z-10 flex flex-col">
+              <div className="absolute left-4 top-10 z-10 flex flex-col">
                 <HrDisplay />
                 {/* <HrvDisplay /> */}
                 <ZoneIndicator />
@@ -128,7 +141,7 @@ export default function SessionPage() {
           )}
           <BlePicker />
           {connected && (
-            <div className="absolute right-44 top-4 z-10 flex items-center gap-2 rounded-md bg-black/55 px-2 py-1 text-white">
+            <div className="absolute right-44 top-10 z-10 flex items-center gap-2 rounded-md bg-black/55 px-2 py-1 text-white">
               <Button
                 type="button"
                 variant="ghost"
@@ -156,16 +169,17 @@ export default function SessionPage() {
               />
             </div>
           )}
+
           <Button
             type="button"
             variant="secondary"
             size="sm"
             onClick={() => setSettingsOpen(true)}
-            className="absolute right-4 top-4 z-10 bg-black/55 text-white hover:bg-black/70"
+            className="absolute right-4 top-24 z-20 bg-black/55 text-white cursor-pointer hover:scale-105 hover:bg-black/70"
           >
             <Settings />
-            Налаштування
           </Button>
+
           <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
         </>
       )}

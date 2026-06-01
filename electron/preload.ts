@@ -18,7 +18,12 @@ type IpcChannel =
   | 'update:status'
   | 'update:get'
   | 'update:check'
-  | 'update:install';
+  | 'update:install'
+  | 'window:minimize'
+  | 'window:maximize-toggle'
+  | 'window:close'
+  | 'window:is-maximized'
+  | 'window:maximized-changed';
 
 const channel = <C extends IpcChannel>(c: C): C => c;
 
@@ -61,6 +66,17 @@ const api = {
       const h = (_: unknown, s: UpdateStatus) => cb(s);
       ipcRenderer.on(channel('update:status'), h);
       return () => ipcRenderer.removeListener(channel('update:status'), h);
+    },
+  },
+  window: {
+    minimize: (): void => ipcRenderer.send(channel('window:minimize')),
+    maximizeToggle: (): void => ipcRenderer.send(channel('window:maximize-toggle')),
+    close: (): void => ipcRenderer.send(channel('window:close')),
+    isMaximized: (): Promise<boolean> => ipcRenderer.invoke(channel('window:is-maximized')),
+    onMaximizedChange: (cb: (maximized: boolean) => void): (() => void) => {
+      const h = (_: unknown, maximized: boolean) => cb(maximized);
+      ipcRenderer.on(channel('window:maximized-changed'), h);
+      return () => ipcRenderer.removeListener(channel('window:maximized-changed'), h);
     },
   },
 } as const;

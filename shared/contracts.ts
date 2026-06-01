@@ -86,6 +86,11 @@ export const IPC = {
   UPDATE_GET: 'update:get',
   UPDATE_CHECK: 'update:check',
   UPDATE_INSTALL: 'update:install',
+  WINDOW_MINIMIZE: 'window:minimize',
+  WINDOW_MAXIMIZE_TOGGLE: 'window:maximize-toggle',
+  WINDOW_CLOSE: 'window:close',
+  WINDOW_IS_MAXIMIZED: 'window:is-maximized',
+  WINDOW_MAXIMIZED_CHANGED: 'window:maximized-changed',
 } as const;
 
 export interface BleDeviceInfo {

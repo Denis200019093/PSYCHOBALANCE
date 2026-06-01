@@ -28,4 +28,10 @@ export const ipc = {
   installUpdate: (): Promise<boolean> => psy().updates.install(),
   onUpdateStatus: (cb: (s: UpdateStatus) => void): (() => void) =>
     psy().updates.onStatus(cb),
+  minimizeWindow: (): void => psy().window.minimize(),
+  toggleMaximizeWindow: (): void => psy().window.maximizeToggle(),
+  closeWindow: (): void => psy().window.close(),
+  isWindowMaximized: (): Promise<boolean> => psy().window.isMaximized(),
+  onWindowMaximizedChange: (cb: (maximized: boolean) => void): (() => void) =>
+    psy().window.onMaximizedChange(cb),
 };
