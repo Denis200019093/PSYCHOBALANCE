@@ -100,7 +100,7 @@ export default function SessionPage() {
       {/* Watermark — always on, survives Ctrl+D (UI hide) and kiosk. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/logo-white.svg"
+        src="./logo-white.svg"
         alt=""
         aria-hidden="true"
         draggable={false}
