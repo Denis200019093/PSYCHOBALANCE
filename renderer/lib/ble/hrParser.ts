@@ -8,7 +8,6 @@ import type { HrSample } from '@shared/contracts';
 //   optional  : RR intervals (uint16 LE each, units of 1/1024 s) if bit 4 set
 export function parseHeartRateMeasurement(value: DataView): HrSample {
   const flags = value.getUint8(0);
-  console.log('[HR-flags] 0x' + flags.toString(16).padStart(2, '0'), 'bytes:', value.byteLength, 'rrBit:', (flags & 0x10) !== 0);
   const is16bit          = (flags & 0x01) !== 0;
   const contactSupported = (flags & 0x04) !== 0;
   const contactDetected  = (flags & 0x02) !== 0;

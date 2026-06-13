@@ -1,17 +1,23 @@
 'use client';
 import { useMemo } from 'react';
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ReferenceArea,
+} from 'recharts';
+import type { DotProps } from 'recharts';
 import { Card, CardContent } from '@/components/ui/card';
 import { useHrHistory } from '@/lib/store/useHrHistory';
 import { useSession } from '@/lib/store/useSession';
 import type { ZoneConfig } from '@shared/contracts';
 
-const VIEW_W = 1000;
-const VIEW_H = 140;
-const PAD_X = 4;
-const PAD_TOP = 6;
-const PAD_BOTTOM = 18;
-
 const EMPTY_ZONES: ZoneConfig[] = [];
+const AXIS_COLOR = 'rgba(255,255,255,0.2)';
+const TICK_COLOR = 'rgba(255,255,255,0.55)';
 
 export function HrChart() {
   const samples = useHrHistory((s) => s.samples);
@@ -28,97 +34,79 @@ export function HrChart() {
           <span>HR — last {Math.round(windowMs / 60000)} min</span>
           <span>
             {samples.length > 0
-              ? `${view.yMin}–${view.yMax} bpm · n=${samples.length}`
+              ? `${view.yDomain[0]}–${view.yDomain[1]} bpm · n=${samples.length}`
               : 'no data'}
           </span>
         </div>
-        <svg
-          viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-          preserveAspectRatio="none"
-          className="block h-[140px] w-full"
-        >
-          {view.bands.map((b) => (
-            <rect
-              key={b.id}
-              x={0}
-              y={b.y}
-              width={VIEW_W}
-              height={b.h}
-              fill={b.color}
-              opacity={b.id === currentZoneId ? 0.32 : 0.14}
-            />
-          ))}
-          {view.gridLines.map((g) => (
-            <g key={`grid-${g.value}`}>
-              <line
-                x1={0}
-                x2={VIEW_W}
-                y1={g.y}
-                y2={g.y}
-                stroke="rgba(255,255,255,0.12)"
-                strokeWidth={1}
-                vectorEffect="non-scaling-stroke"
+        <div className="h-35 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={samples} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid stroke="rgba(255,255,255,0.12)" vertical={false} />
+              {zones.map((z) => (
+                // Horizontal HR band per zone; brighter when it's the active zone.
+                <ReferenceArea
+                  key={z.id}
+                  y1={z.minHr}
+                  y2={z.maxHr}
+                  fill={z.color}
+                  fillOpacity={z.id === currentZoneId ? 0.32 : 0.14}
+                  stroke="none"
+                  ifOverflow="hidden"
+                />
+              ))}
+              <XAxis
+                dataKey="ts"
+                type="number"
+                scale="time"
+                domain={view.xDomain}
+                allowDataOverflow
+                ticks={view.xTicks}
+                interval={0}
+                tickFormatter={(ts: number) => formatSeconds(Math.round((ts - view.xDomain[0]) / 1000))}
+                tick={{ fill: 'rgba(255,255,255,0.45)', fontSize: 10 }}
+                stroke={AXIS_COLOR}
               />
-              <text
-                x={6}
-                y={g.y - 2}
-                fontSize={10}
-                fill="rgba(255,255,255,0.55)"
-                fontFamily="system-ui, sans-serif"
-              >
-                {g.value}
-              </text>
-            </g>
-          ))}
-          {view.path && (
-            <path
-              d={view.path}
-              fill="none"
-              stroke="#ffffff"
-              strokeWidth={1.5}
-              strokeLinejoin="round"
-              strokeLinecap="round"
-              vectorEffect="non-scaling-stroke"
-            />
-          )}
-          {view.lastPoint && (
-            <circle
-              cx={view.lastPoint.x}
-              cy={view.lastPoint.y}
-              r={3}
-              fill="#ffffff"
-              stroke={view.lastPoint.color}
-              strokeWidth={1.5}
-              vectorEffect="non-scaling-stroke"
-            />
-          )}
-          {view.timeTicks.map((t) => (
-            <text
-              key={`t-${t.x}`}
-              x={t.x}
-              y={VIEW_H - 4}
-              fontSize={10}
-              textAnchor="middle"
-              fill="rgba(255,255,255,0.45)"
-              fontFamily="system-ui, sans-serif"
-            >
-              {t.label}
-            </text>
-          ))}
-        </svg>
+              <YAxis
+                domain={view.yDomain}
+                allowDataOverflow
+                ticks={view.yTicks}
+                interval={0}
+                width={34}
+                tick={{ fill: TICK_COLOR, fontSize: 10 }}
+                stroke={AXIS_COLOR}
+              />
+              <Line
+                type="linear"
+                dataKey="bpm"
+                stroke="#ffffff"
+                strokeWidth={1.5}
+                isAnimationActive={false}
+                dot={<LastDot total={samples.length} color={view.lastColor} />}
+                activeDot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );
 }
 
+// Render a marker only on the final sample (recharts calls `dot` per point).
+function LastDot({ total, color, ...props }: DotProps & { total: number; color: string; index?: number }) {
+  const { cx, cy, index } = props as DotProps & { index?: number };
+  if (index !== total - 1 || cx == null || cy == null) return null;
+  return (
+    <circle cx={cx} cy={cy} r={3} fill="#ffffff" stroke={color} strokeWidth={1.5} />
+  );
+}
+
 interface ChartView {
-  path: string | null;
-  bands: { id: string; y: number; h: number; color: string }[];
-  gridLines: { value: number; y: number }[];
-  timeTicks: { x: number; label: string }[];
-  yMin: number;
-  yMax: number;
-  lastPoint: { x: number; y: number; color: string } | null;
+  xDomain: [number, number];
+  yDomain: [number, number];
+  xTicks: number[];
+  yTicks: number[];
+  lastColor: string;
 }
 
 function buildView(
@@ -127,14 +115,13 @@ function buildView(
   zones: ZoneConfig[],
 ): ChartView {
   if (samples.length === 0) {
+    const now = Date.now();
     return {
-      path: null,
-      bands: [],
-      gridLines: [],
-      timeTicks: [],
-      yMin: 40,
-      yMax: 180,
-      lastPoint: null,
+      xDomain: [now - windowMs, now],
+      yDomain: [40, 180],
+      xTicks: timeTicks(now - windowMs, windowMs),
+      yTicks: [40, 180],
+      lastColor: '#ffffff',
     };
   }
 
@@ -151,70 +138,40 @@ function buildView(
   const last = samples[samples.length - 1]!;
   const elapsed = last.ts - first.ts;
   const tStart = elapsed > windowMs ? last.ts - windowMs : first.ts;
-  const tEnd = tStart + windowMs;
-  const plotTop = PAD_TOP;
-  const plotBottom = VIEW_H - PAD_BOTTOM;
-  const plotHeight = plotBottom - plotTop;
-  const plotLeft = PAD_X;
-  const plotRight = VIEW_W - PAD_X;
-  const plotWidth = plotRight - plotLeft;
-
-  const xFor = (ts: number) =>
-    plotLeft + ((Math.max(tStart, Math.min(tEnd, ts)) - tStart) / windowMs) * plotWidth;
-  const yFor = (bpm: number) =>
-    plotTop + (1 - (bpm - yMin) / (yMax - yMin)) * plotHeight;
-
-  let path = '';
-  for (let i = 0; i < samples.length; i++) {
-    const s = samples[i]!;
-    if (s.ts < tStart) continue;
-    const cmd = path === '' ? 'M' : 'L';
-    path += `${cmd}${xFor(s.ts).toFixed(2)},${yFor(s.bpm).toFixed(2)}`;
-  }
-
-  const bands = zones
-    .map((z) => {
-      const zMin = Math.max(yMin, z.minHr);
-      const zMax = Math.min(yMax, z.maxHr);
-      if (zMax <= zMin) return null;
-      const yTop = yFor(zMax);
-      const yBottom = yFor(zMin);
-      return { id: z.id, y: yTop, h: yBottom - yTop, color: z.color };
-    })
-    .filter((b): b is { id: string; y: number; h: number; color: string } => b !== null);
-
-  const gridLines: { value: number; y: number }[] = [];
-  const step = pickGridStep(yMax - yMin);
-  const firstGrid = Math.ceil(yMin / step) * step;
-  for (let v = firstGrid; v <= yMax; v += step) {
-    gridLines.push({ value: v, y: yFor(v) });
-  }
-
-  const timeTicks: { x: number; label: string }[] = [];
-  const tickCount = 4;
-  for (let i = 0; i <= tickCount; i++) {
-    const seconds = Math.round((windowMs / 1000) * (i / tickCount));
-    const x = plotLeft + (i / tickCount) * plotWidth;
-    timeTicks.push({ x, label: i === 0 ? '0' : formatSeconds(seconds) });
-  }
 
   const lastZone = zones.find((z) => last.bpm >= z.minHr && last.bpm < z.maxHr);
-  const lastPoint = {
-    x: xFor(last.ts),
-    y: yFor(last.bpm),
-    color: lastZone?.color ?? '#ffffff',
-  };
 
-  return { path: path || null, bands, gridLines, timeTicks, yMin, yMax, lastPoint };
+  // Y ticks at the visible zone boundaries (the from/to of each band) plus the
+  // axis ends, so the labels read off where each zone starts and stops.
+  const bounds = new Set<number>([yMin, yMax]);
+  for (const z of zones) {
+    if (z.minHr > yMin && z.minHr < yMax) bounds.add(z.minHr);
+    if (z.maxHr > yMin && z.maxHr < yMax) bounds.add(z.maxHr);
+  }
+
+  return {
+    xDomain: [tStart, tStart + windowMs],
+    yDomain: [yMin, yMax],
+    xTicks: timeTicks(tStart, windowMs),
+    yTicks: [...bounds].sort((a, b) => a - b),
+    lastColor: lastZone?.color ?? '#ffffff',
+  };
 }
 
-function pickGridStep(range: number): number {
-  if (range <= 40) return 10;
-  if (range <= 80) return 20;
-  return 50;
+// Tick timestamps every 30 s; widen the step on long windows so labels don't crowd.
+function timeTicks(tStart: number, windowMs: number): number[] {
+  const totalSec = windowMs / 1000;
+  let stepSec = 30;
+  while (totalSec / stepSec > 13) stepSec *= 2;
+  const ticks: number[] = [];
+  for (let sec = 0; sec <= totalSec + 0.001; sec += stepSec) {
+    ticks.push(tStart + sec * 1000);
+  }
+  return ticks;
 }
 
 function formatSeconds(s: number): string {
+  if (s <= 0) return '0';
   if (s < 60) return `${s}s`;
   const m = Math.floor(s / 60);
   const rem = s % 60;
