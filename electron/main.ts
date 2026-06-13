@@ -167,6 +167,7 @@ async function createWindow(): Promise<BrowserWindow> {
 
   if (isDev) {
     await win.loadURL('http://localhost:3000');
+    win.webContents.openDevTools({ mode: 'detach' }); // TEMP: HR flags diagnosis
   } else {
     await win.loadFile(path.join(__dirname, '..', '..', 'renderer', 'out', 'index.html'));
   }
