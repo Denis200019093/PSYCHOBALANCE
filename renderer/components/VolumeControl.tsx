@@ -11,7 +11,7 @@ interface Props {
 
 export function VolumeControl({ muted, volume, onMutedChange, onVolumeChange }: Props) {
   return (
-    <div className="absolute right-44 top-10 z-10 flex items-center gap-2 rounded-md bg-black/55 px-2 py-1 text-white">
+    <div className="absolute right-46 top-10 z-10 flex items-center gap-2 rounded-md bg-black/55 px-2 py-1 text-white">
       <Button
         type="button"
         variant="ghost"

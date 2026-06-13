@@ -32,6 +32,21 @@ export default function SessionPage() {
 
   useHrPipeline(client);
 
+  // Volume/mute are a renderer-only UI pref → localStorage, not the settings
+  // file (slider drag fires many changes; atomic disk writes would be wasteful).
+  // Restore after mount to avoid a static-export hydration mismatch.
+  useEffect(() => {
+    const v = localStorage.getItem('psy.volume');
+    const m = localStorage.getItem('psy.muted');
+    if (v !== null) setVolume(Math.min(1, Math.max(0, Number(v))));
+    if (m !== null) setMuted(m === '1');
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('psy.volume', String(volume));
+    localStorage.setItem('psy.muted', muted ? '1' : '0');
+  }, [volume, muted]);
+
   // Ctrl+D toggles all overlay UI (operator shortcut; watermark stays).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
