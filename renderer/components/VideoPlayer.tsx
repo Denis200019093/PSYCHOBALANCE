@@ -27,7 +27,17 @@ export function VideoPlayer({ src, fadeMs, muted = false, volume = 1 }: Props) {
   }, [volume]);
 
   useEffect(() => {
-    if (!src) return;
+    // No zone/clip (e.g. device disconnected) → fade both layers out and drop
+    // their sources so nothing keeps looping behind the black backdrop.
+    if (!src) {
+      setA({ src: null, visible: false });
+      setB({ src: null, visible: false });
+      if (aRef.current) aRef.current.removeAttribute('src');
+      if (bRef.current) bRef.current.removeAttribute('src');
+      aRef.current?.load();
+      bRef.current?.load();
+      return;
+    }
 
     const visibleLayerSrc = a.visible ? a.src : b.src;
     if (visibleLayerSrc === src) return;
