@@ -194,7 +194,10 @@ app.whenReady().then(() => {
     const url = new URL(request.url);
     // Hostname is a fixed marker ("local"); the on-disk path is URL-encoded into the pathname.
     const raw = decodeURIComponent(url.pathname).replace(/^\/+/, '');
-    const allowed = settings.get().zones.some((z) => z.videoPath === raw);
+    // Allow any template's video (switching templates must not 403 a clip).
+    const allowed = settings
+      .get()
+      .templates.some((t) => t.zones.some((z) => z.videoPath === raw));
     if (!allowed) return new Response('Forbidden', { status: 403 });
     return net.fetch(pathToFileURL(raw).toString());
   });

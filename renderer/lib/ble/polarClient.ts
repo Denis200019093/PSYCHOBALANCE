@@ -25,6 +25,14 @@ export class PolarClient {
   readonly hr$ = new Subject<HrSample>();
   readonly error$ = new Subject<Error>();
 
+  // Last beat seen, kept so a re-subscriber (pipeline rebuild on template /
+  // settings change) can be seeded immediately instead of waiting up to ~1s for
+  // the next ~1 Hz Polar notification. Null while not streaming.
+  private _lastSample: HrSample | null = null;
+  get lastSample(): HrSample | null {
+    return this._lastSample;
+  }
+
   private device: BluetoothDevice | null = null;
   private characteristic: BluetoothRemoteGATTCharacteristic | null = null;
   // Bumped on every connect/disconnect/drop. An in-flight openGatt only commits
@@ -90,7 +98,9 @@ export class PolarClient {
   private onNotify = (event: Event): void => {
     const char = event.target as BluetoothRemoteGATTCharacteristic;
     if (!char.value) return;
-    this.hr$.next(parseHeartRateMeasurement(char.value));
+    const sample = parseHeartRateMeasurement(char.value);
+    this._lastSample = sample;
+    this.hr$.next(sample);
   };
 
   // Involuntary drop (strap removed / out of range). No silent auto-reconnect:
@@ -128,5 +138,6 @@ export class PolarClient {
     }
     this.characteristic = null;
     this.device = null;
+    this._lastSample = null; // don't seed a rebuilt pipeline with a stale beat
   }
 }

@@ -8,8 +8,18 @@ export interface ZoneConfig {
   fadeMs: number;
 }
 
-export interface AppSettings {
+// A named, saved zone-set. Several can exist; exactly one is active at a time
+// (AppSettings.activeTemplateId). The HR→zone→video pipeline never sees this
+// type — it only ever receives the active template's ZoneConfig[].
+export interface ZoneTemplate {
+  id: string;
+  name: string;
   zones: ZoneConfig[];
+}
+
+export interface AppSettings {
+  templates: ZoneTemplate[];
+  activeTemplateId: string;
   autoMode: boolean;
   dwellSeconds: number;
   crossfadeMs: number;
@@ -71,6 +81,34 @@ export function isDefaultZoneShape(zones: ZoneConfig[]): boolean {
       z.fadeMs === def.fadeMs
     );
   });
+}
+
+export const DEFAULT_TEMPLATE_ID = 'default';
+export const DEFAULT_TEMPLATE_NAME = '3 зони (дефолт)';
+
+// Seed template wrapping the default 3-zone set. Fresh copies of the zones so
+// callers can mutate without touching DEFAULT_ZONES.
+export function makeDefaultTemplate(): ZoneTemplate {
+  return {
+    id: DEFAULT_TEMPLATE_ID,
+    name: DEFAULT_TEMPLATE_NAME,
+    zones: DEFAULT_ZONES.map((z) => ({ ...z })),
+  };
+}
+
+// The single point where "active template" resolves to a zone list. Pipeline,
+// chart and video-path validation call this — they never branch on templates.
+// Falls back to the first template (or a default) if the active id is stale.
+export function getActiveTemplate(settings: AppSettings): ZoneTemplate {
+  return (
+    settings.templates.find((t) => t.id === settings.activeTemplateId) ??
+    settings.templates[0] ??
+    makeDefaultTemplate()
+  );
+}
+
+export function getActiveZones(settings: AppSettings): ZoneConfig[] {
+  return getActiveTemplate(settings).zones;
 }
 
 export const IPC = {

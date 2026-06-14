@@ -13,7 +13,7 @@ import type { DotProps } from 'recharts';
 import { Card, CardContent } from '@/components/ui/card';
 import { useHrHistory } from '@/lib/store/useHrHistory';
 import { useSession } from '@/lib/store/useSession';
-import type { ZoneConfig } from '@shared/contracts';
+import { getActiveZones, type ZoneConfig } from '@shared/contracts';
 
 const EMPTY_ZONES: ZoneConfig[] = [];
 const AXIS_COLOR = 'rgba(255,255,255,0.2)';
@@ -22,7 +22,7 @@ const TICK_COLOR = 'rgba(255,255,255,0.55)';
 export function HrChart() {
   const samples = useHrHistory((s) => s.samples);
   const windowMs = useHrHistory((s) => s.windowMs);
-  const zones = useSession((s) => s.settings?.zones ?? EMPTY_ZONES);
+  const zones = useSession((s) => (s.settings ? getActiveZones(s.settings) : EMPTY_ZONES));
   const currentZoneId = useSession((s) => s.currentZone?.id ?? null);
 
   const view = useMemo(() => buildView(samples, windowMs, zones), [samples, windowMs, zones]);

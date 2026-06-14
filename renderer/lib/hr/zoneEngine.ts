@@ -30,6 +30,15 @@ export function zoneEngine(
     scan<HrSample, ZoneState>((state, sample) => {
       const observed = findZone(sample.bpm, opts.zones)?.id ?? null;
 
+      // 0) Cold start (no zone established yet) — adopt the first observed zone
+      // immediately. Dwell hysteresis only guards transitions BETWEEN zones, so
+      // there's nothing to flap from on a fresh subscription (connect, template
+      // switch, settings change). Without this the first beat would idle the
+      // whole dwell with currentZoneId null → no video + zone "-" for dwellMs.
+      if (state.currentZoneId === null && observed !== null) {
+        return { ...state, hrRaw: sample.bpm, currentZoneId: observed, pendingZoneId: null, pendingSince: null };
+      }
+
       // 1) Observed zone matches what we already display — clear pending.
       if (observed === state.currentZoneId) {
         return { ...state, hrRaw: sample.bpm, pendingZoneId: null, pendingSince: null };

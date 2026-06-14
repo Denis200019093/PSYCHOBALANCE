@@ -1,10 +1,21 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
+import { startWith } from 'rxjs/operators';
 import type { PolarClient } from '@/lib/ble/polarClient';
 import { zoneEngine } from '@/lib/hr/zoneEngine';
 import { hrvEngine } from '@/lib/hr/hrvEngine';
 import { findZoneById } from '@/lib/hr/zones';
+import { getActiveZones } from '@shared/contracts';
+import type { ZoneConfig } from '@shared/contracts';
 import { useSession } from '@/lib/store/useSession';
 import { useHrHistory } from '@/lib/store/useHrHistory';
+
+interface PipelineConfig {
+  zones: ZoneConfig[];
+  dwellMs: number;
+  chartWindowSec: number;
+  autoMode: boolean;
+  hrvWindowSec: number;
+}
 
 // No HR sample for this long ⇒ device is gone. Polar streams ~1 Hz, so this
 // catches a strap drop in ~2 missed beats instead of waiting 3–5 s for the OS
@@ -23,9 +34,30 @@ export function useHrPipeline(client: PolarClient): void {
   const setBleStatus = useSession((s) => s.setBleStatus);
   const setHrv = useSession((s) => s.setHrv);
 
+  // Only zone/stream-relevant fields should rebuild the pipeline. Toggling an
+  // unrelated setting (kioskMode, …) used to tear down the BLE subscriptions
+  // and cold-start the zone engine → ~dwell of no video + zone "-". Key the
+  // config off a content signature so such toggles are a no-op here. Pipeline
+  // stays template-agnostic: getActiveZones resolves the active template to a
+  // flat list, the engine never learns the word "template".
+  const configKey = settings
+    ? JSON.stringify({
+        zones: getActiveZones(settings),
+        dwellMs: settings.dwellSeconds * 1000,
+        chartWindowSec: settings.chartWindowSec,
+        autoMode: settings.autoMode,
+        hrvWindowSec: settings.hrvWindowSec,
+      })
+    : null;
+  const config = useMemo<PipelineConfig | null>(
+    () => (configKey ? (JSON.parse(configKey) as PipelineConfig) : null),
+    [configKey],
+  );
+
   useEffect(() => {
-    if (!settings) return;
-    useHrHistory.getState().setWindow(settings.chartWindowSec);
+    if (!config) return;
+    const { zones, dwellMs, chartWindowSec, autoMode, hrvWindowSec } = config;
+    useHrHistory.getState().setWindow(chartWindowSec);
     const statusSub = client.status$.subscribe((status) => {
       setBleStatus(status);
       // Device not streaming (physical strap drop, manual disconnect, error) →
@@ -36,20 +68,23 @@ export function useHrPipeline(client: PolarClient): void {
         useHrHistory.getState().clear();
       }
     });
-    const engine$ = zoneEngine(client.hr$, {
-      zones: settings.zones,
-      dwellMs: settings.dwellSeconds * 1000,
-    });
+    // Seed the engine with the last beat so a rebuild (template / settings
+    // change) resolves the zone instantly instead of waiting up to ~1s for the
+    // next ~1 Hz notification. Only while streaming — lastSample is null
+    // otherwise, so a rebuild while disconnected stays empty.
+    const seeded$ =
+      client.lastSample !== null ? client.hr$.pipe(startWith(client.lastSample)) : client.hr$;
+    const engine$ = zoneEngine(seeded$, { zones, dwellMs });
     const engineSub = engine$.subscribe((state) => {
       setHr(state.hrRaw);
       // Manual mode: keep whatever zone the operator selected; ignore HR.
-      const current = settings.autoMode
-        ? findZoneById(state.currentZoneId, settings.zones)
+      const current = autoMode
+        ? findZoneById(state.currentZoneId, zones)
         : useSession.getState().currentZone;
-      const pending = findZoneById(state.pendingZoneId, settings.zones);
+      const pending = findZoneById(state.pendingZoneId, zones);
       setZone(current, pending);
     });
-    const hrv$ = hrvEngine(client.hr$, { windowSec: settings.hrvWindowSec });
+    const hrv$ = hrvEngine(client.hr$, { windowSec: hrvWindowSec });
     const hrvSub = hrv$.subscribe(setHrv);
     // Watchdog: each beat re-arms a timer. If it fires (stream went silent
     // before the slow OS disconnect event), wipe to initial state now.
@@ -80,5 +115,5 @@ export function useHrPipeline(client: PolarClient): void {
       errSub.unsubscribe();
       setHrv(null);
     };
-  }, [settings, client, setHr, setZone, setBleStatus, setHrv]);
+  }, [config, client, setHr, setZone, setBleStatus, setHrv]);
 }
