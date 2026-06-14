@@ -26,6 +26,7 @@ export function UpdateIndicator() {
     }
   };
 
+  const onDownload = () => void ipc.downloadUpdate();
   const onInstall = () => void ipc.installUpdate();
 
   const view = renderState(status);
@@ -45,13 +46,22 @@ export function UpdateIndicator() {
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-2">
+        {status.state === 'available' && (
+          <Button size="sm" variant="default" onClick={onDownload}>
+            <Download />
+            Завантажити
+          </Button>
+        )}
         {status.state === 'downloaded' && (
           <Button size="sm" variant="success" onClick={onInstall}>
             <RotateCw />
             Перезапустити
           </Button>
         )}
-        {!disabled && status.state !== 'downloading' && status.state !== 'downloaded' && (
+        {!disabled &&
+          status.state !== 'available' &&
+          status.state !== 'downloading' &&
+          status.state !== 'downloaded' && (
           <Button
             size="sm"
             variant="secondary"
@@ -99,7 +109,7 @@ function renderState(s: UpdateStatus): StateView {
       return {
         icon: <Sparkles className="size-4 text-sky-400" />,
         title: `Доступне оновлення${s.version ? ` v${s.version}` : ''}`,
-        subtitle: 'Завантаження почнеться автоматично',
+        subtitle: 'Натисніть «Завантажити»',
         tone: 'border-sky-500/30 bg-sky-500/10',
       };
     case 'downloading':

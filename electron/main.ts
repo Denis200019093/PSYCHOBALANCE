@@ -221,6 +221,16 @@ app.whenReady().then(() => {
     }
     return updateStatus;
   });
+  ipcMain.handle(IPC.UPDATE_DOWNLOAD, async () => {
+    if (isDev || updateStatus.state !== 'available') return false;
+    try {
+      await autoUpdater.downloadUpdate();
+      return true;
+    } catch (err) {
+      setUpdateStatus({ state: 'error', error: (err as Error).message });
+      return false;
+    }
+  });
   ipcMain.handle(IPC.UPDATE_INSTALL, () => {
     if (updateStatus.state !== 'downloaded') return false;
     autoUpdater.quitAndInstall();
@@ -241,7 +251,8 @@ app.whenReady().then(() => {
 });
 
 function initAutoUpdater() {
-  autoUpdater.autoDownload = true;
+  // Manual download: update-available only notifies; user clicks to fetch.
+  autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.logger = console;
 

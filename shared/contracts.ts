@@ -123,6 +123,7 @@ export const IPC = {
   UPDATE_STATUS: 'update:status',
   UPDATE_GET: 'update:get',
   UPDATE_CHECK: 'update:check',
+  UPDATE_DOWNLOAD: 'update:download',
   UPDATE_INSTALL: 'update:install',
   WINDOW_MINIMIZE: 'window:minimize',
   WINDOW_MAXIMIZE_TOGGLE: 'window:maximize-toggle',

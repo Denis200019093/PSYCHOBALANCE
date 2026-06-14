@@ -25,6 +25,7 @@ export const ipc = {
   cancelBleSelect: (): void => psy().ble.cancel(),
   getUpdateStatus: (): Promise<UpdateStatus> => psy().updates.get(),
   checkForUpdate: (): Promise<UpdateStatus> => psy().updates.check(),
+  downloadUpdate: (): Promise<boolean> => psy().updates.download(),
   installUpdate: (): Promise<boolean> => psy().updates.install(),
   onUpdateStatus: (cb: (s: UpdateStatus) => void): (() => void) =>
     psy().updates.onStatus(cb),

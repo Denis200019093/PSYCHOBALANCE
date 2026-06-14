@@ -18,6 +18,7 @@ type IpcChannel =
   | 'update:status'
   | 'update:get'
   | 'update:check'
+  | 'update:download'
   | 'update:install'
   | 'window:minimize'
   | 'window:maximize-toggle'
@@ -61,6 +62,7 @@ const api = {
   updates: {
     get: (): Promise<UpdateStatus> => ipcRenderer.invoke(channel('update:get')),
     check: (): Promise<UpdateStatus> => ipcRenderer.invoke(channel('update:check')),
+    download: (): Promise<boolean> => ipcRenderer.invoke(channel('update:download')),
     install: (): Promise<boolean> => ipcRenderer.invoke(channel('update:install')),
     onStatus: (cb: (s: UpdateStatus) => void): (() => void) => {
       const h = (_: unknown, s: UpdateStatus) => cb(s);
